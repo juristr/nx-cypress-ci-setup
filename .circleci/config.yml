@@ -1,0 +1,64 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: juristr/angular-ci-build:1.0.0
+    steps:
+      - checkout
+      - run:
+          name: Operating branch
+          command: echo ${CIRCLE_BRANCH}
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-
+      - run:
+          name: Install node packages
+          command: npm install
+      - save_cache:
+          key: v1-dependencies-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: Build demoapp
+          command: npm run build:demoapp
+      - run:
+          name: Execute unit tests
+          command: npm run test:ci
+  e2e:
+    docker:
+      - image: dziamid/ubuntu-docker-compose #ubuntu + docker + docker-compose
+    steps:
+      - checkout
+      - setup_remote_docker
+      #  - run:
+      #      #need to login so we can pull private repos from hub in the following runs
+      #      name: Login
+      #      command: docker login -u $DOCKERHUB_USER -e $DOCKERHUB_EMAIL -p $DOCKERHUB_PASSWORD
+      - run:
+          name: Build
+          command: docker-compose -p nxcypressdemo build
+      - run:
+          name: Test
+          command: docker-compose -p nxcypressdemo run cypress-e2e ./node_modules/.bin/cypress run --env project=demoapp,environment=ci
+      # - run:
+      #     name: Collect artifacts
+      #     command: |
+      #       docker cp nxcypressdemo_cypress-e2e:/app/cypress/screenshots $(pwd)/cypress/screenshots
+      #     when: always
+      # - store_test_results:
+      #     path: cypress/screenshots
+      #     when: always
+      # - store_artifacts:
+      #     path: cypress/screenshots
+      #     when: always
+
+workflows:
+  version: 2
+  # The build and deploy workflow
+  build_and_test:
+    jobs:
+      - build
+  e2e_tests:
+    jobs:
+      - e2e

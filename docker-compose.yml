@@ -1,0 +1,19 @@
+version: '3.3'
+
+services:
+  angular-app:
+    container_name: demoapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '80:80'
+
+  cypress-e2e:
+    container_name: demo-e2e
+    build:
+      context: ./e2e
+      dockerfile: Dockerfile.cypress
+    depends_on:
+      - angular-app
+    network_mode: host

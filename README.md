@@ -34,11 +34,28 @@ Run `ng build --project=myapp` to build the project. The build artifacts will be
 
 Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
-## Running end-to-end tests
+## Run e2e tests inside Docker
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-Before running the tests make sure you are serving the app via `ng serve`.
+### Build docker container
 
-## Further help
+```
+$ docker-compose build
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+The respective docker files are in the root `Dockerfile` for the Angular app and in the `e2e/Dockerfile.cypress` for the Cypress test execution. All containers install the dependencies by themselves and do not include them via folder mounts. The reason is that for native packages that wouldn't work when executing the npm installation on OSX but running the build inside the container which runs on Linux.
+
+### Execute the tests
+
+Then execute the tests like
+
+```
+$ docker-compose run cypress-e2e ./node_modules/.bin/cypress run --env project=demoapp,environment=ci
+```
+
+### Build just a single container
+
+To build single containers, you can also directly target a docker-compose service, for example:
+
+```
+$ docker-compose build cypress-e2e
+```
